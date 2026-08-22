@@ -1,0 +1,1062 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>PandaLingo Buddy — Inline SVG Pet</title>
+  <style>
+    /* ---------- Brand tokens (transcribed from /home/ubuntu/speak/brand/brand_design.md) ---------- */
+    :root {
+      --pl-bg: #F8F6F2;
+      --pl-bg-2: #F3EFE8;
+      --pl-card: #FFFFFF;
+      --pl-text: #1E1E1E;
+      --pl-muted: #6B6B6B;
+      --pl-gold: #B68C5A;
+      --pl-brown: #8B6A46;
+      --pl-dark: #232323;
+      --pl-success: #4F7A61;
+      --pl-border: rgba(0, 0, 0, 0.06);
+      --pl-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      --pl-shadow-lift: 0 16px 40px rgba(30, 26, 20, 0.10);
+      --pl-radius: 20px;
+      --pl-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+      --pl-fast: 150ms;
+      --pl-base: 250ms;
+      --pl-slow: 400ms;
+      --pl-font-display: 'Canela', 'Cormorant Garamond', 'Playfair Display', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+      --pl-font-body: Inter, 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+      /* panda palette */
+      --fur: #F6F1E9;
+      --fur-shade: #E7DFD2;
+      --fur-line: #DCD3C4;
+      --ink: #2A2724;
+      --ink-soft: #3C3832;
+      --muzzle: #FFFDF9;
+      --scarf: #B68C5A;
+      --scarf-deep: #8B6A46;
+      --coat: #D9C7AD;
+      --coat-shade: #C3AC8D;
+      --blush: rgba(182, 140, 90, 0.22);
+      --shadow: rgba(42, 39, 36, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: var(--pl-bg);
+      color: var(--pl-text);
+      font-family: var(--pl-font-body);
+      font-size: 18px;
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---------- Demo page ---------- */
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 96px 32px 320px;
+    }
+    .eyebrow {
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--pl-gold);
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-family: var(--pl-font-display);
+      font-weight: 400;
+      font-size: clamp(48px, 7vw, 88px);
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      margin: 0 0 24px;
+    }
+    h1 em {
+      font-style: italic;
+      color: var(--pl-gold);
+      font-weight: 400;
+    }
+    .lede {
+      max-width: 560px;
+      color: var(--pl-muted);
+      font-size: 19px;
+      margin-bottom: 56px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+    .feature {
+      background: var(--pl-card);
+      border: 1px solid var(--pl-border);
+      border-radius: var(--pl-radius);
+      padding: 24px 28px;
+      box-shadow: var(--pl-shadow);
+      transition: transform var(--pl-base) var(--pl-ease), box-shadow var(--pl-base) var(--pl-ease);
+    }
+    .feature:hover { transform: translateY(-2px); box-shadow: var(--pl-shadow-lift); }
+    .feature h3 { margin: 0 0 6px; font-size: 17px; }
+    .feature p { margin: 0; color: var(--pl-muted); font-size: 15px; line-height: 1.6; }
+
+    .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+      padding: 14px 22px;
+      border-radius: 9999px;
+      transition: background var(--pl-base) var(--pl-ease), transform var(--pl-fast) var(--pl-ease);
+    }
+    .btn-primary { background: var(--pl-dark); color: #fff; }
+    .btn-primary:hover { background: #353535; transform: translateY(-1px); }
+    .btn-ghost { background: transparent; color: var(--pl-text); border: 1px solid var(--pl-border); }
+    .btn-ghost:hover { background: var(--pl-bg-2); }
+
+    /* ---------- Pet container ---------- */
+    .pet-root {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 200px;
+      height: 200px;
+      z-index: 9999;
+      pointer-events: none;
+      transform: translate3d(0, 0, 0);
+      transition: bottom var(--pl-base) var(--pl-ease), right var(--pl-base) var(--pl-ease);
+      will-change: transform;
+    }
+    .pet-root.dock { width: 64px; height: 64px; }
+    .pet-root.dock .pet-shadow { transform: translateY(8px) scale(0.6); }
+    .pet-root.dock .pet-svg { transform: scale(0.43); }
+    .pet-root[data-anchor^="left"]   { right: auto;  left: 24px; }
+    .pet-root[data-anchor^="right"]  { left: auto;   right: 24px; }
+    .pet-root[data-anchor^="center"] { left: 50%;    right: auto; transform: translate3d(-50%, 0, 0); }
+    .pet-root[data-anchor^="top"]    { bottom: auto; top: 24px; }
+
+    /* click-through all but the pet itself */
+    .pet-root * { pointer-events: none; }
+    .pet-root .hit-area,
+    .pet-root .pet-svg,
+    .pet-root .pet-bubble,
+    .pet-root .pet-controls,
+    .pet-root .pet-trigger { pointer-events: auto; }
+
+    .pet-root .hit-area {
+      position: absolute;
+      inset: 8% 8% 8% 8%;
+      border-radius: 28%;
+      cursor: pointer;
+      background: transparent;
+    }
+
+    /* SVG inner scaling wrapper */
+    .pet-svg {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 60%;
+      transition: transform var(--pl-base) var(--pl-ease);
+    }
+    .pet-svg svg { width: 100%; height: 100%; overflow: visible; }
+
+    /* breathing on the whole body */
+    .breathing { animation: breathe 3.6s var(--pl-ease) infinite; transform-origin: 50% 70%; }
+    @keyframes breathe {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50%      { transform: translateY(-2px) scale(1.018); }
+    }
+
+    /* shadow */
+    .pet-shadow {
+      position: absolute;
+      left: 50%;
+      bottom: 4%;
+      width: 60%;
+      height: 10px;
+      margin-left: -30%;
+      border-radius: 50%;
+      background: var(--shadow);
+      filter: blur(6px);
+      transform-origin: 50% 50%;
+      transition: transform var(--pl-slow) var(--pl-ease);
+      animation: shadow-breath 3.6s var(--pl-ease) infinite;
+    }
+    @keyframes shadow-breath {
+      0%, 100% { transform: scale(1); opacity: 0.85; }
+      50%      { transform: scale(0.92); opacity: 0.6; }
+    }
+
+    /* ---------- Eyes ---------- */
+    .eye { transform-box: fill-box; transform-origin: center; }
+    .blink {
+      animation: blink var(--pl-blink-dur, 4.2s) var(--pl-ease) infinite;
+      transform-origin: center;
+    }
+    @keyframes blink {
+      0%, 92%, 100% { transform: scaleY(1); }
+      94%, 96%      { transform: scaleY(0.06); }
+    }
+    .pupil { transition: transform 120ms var(--pl-ease); }
+    .head { transform-box: fill-box; transform-origin: 50% 80%; transition: transform 220ms var(--pl-ease); }
+
+    .tail {
+      transform-box: fill-box;
+      transform-origin: 0% 50%;
+      animation: tail-wag 5.5s var(--pl-ease) infinite;
+    }
+    @keyframes tail-wag {
+      0%, 100% { transform: rotate(-3deg); }
+      50%      { transform: rotate(6deg); }
+    }
+    .tail.tail-happy { animation: tail-wag 1.4s var(--pl-ease) infinite; }
+    .tail.tail-sad   { animation: none; transform: rotate(-12deg); }
+
+    .ear { transform-box: fill-box; transform-origin: 50% 100%; transition: transform 180ms var(--pl-ease); }
+    .ear.left  { transform-origin: 100% 100%; }
+    .ear.right { transform-origin: 0% 100%; }
+
+    .mouth { transition: d 200ms var(--pl-ease); }
+
+    /* ---------- Speech bubble ---------- */
+    .pet-bubble {
+      position: absolute;
+      left: -120%;
+      top: -10%;
+      width: 200px;
+      padding: 14px 18px;
+      background: var(--pl-card);
+      border: 1px solid var(--pl-border);
+      border-radius: 18px;
+      box-shadow: var(--pl-shadow-lift);
+      color: var(--pl-text);
+      font-size: 15px;
+      line-height: 1.5;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity var(--pl-base) var(--pl-ease), transform var(--pl-base) var(--pl-ease);
+      pointer-events: auto;
+    }
+    .pet-bubble::after {
+      content: "";
+      position: absolute;
+      right: 18px;
+      bottom: -8px;
+      width: 16px;
+      height: 16px;
+      background: var(--pl-card);
+      border-right: 1px solid var(--pl-border);
+      border-bottom: 1px solid var(--pl-border);
+      transform: rotate(45deg);
+    }
+    .pet-bubble.show { opacity: 1; transform: translateY(0); }
+    .pet-bubble .bubble-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .pet-bubble .bubble-actions button {
+      appearance: none;
+      border: 0;
+      background: var(--pl-bg-2);
+      color: var(--pl-text);
+      font: inherit;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 9999px;
+      cursor: pointer;
+    }
+    .pet-bubble .bubble-actions button:hover { background: var(--pl-coat-shade, #E7DFD2); }
+
+    /* ---------- Floating controls ---------- */
+    .pet-controls {
+      position: absolute;
+      left: -28px;
+      top: -28px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity var(--pl-base) var(--pl-ease), transform var(--pl-base) var(--pl-ease);
+    }
+    .pet-root:hover .pet-controls,
+    .pet-root:focus-within .pet-controls,
+    .pet-root.show-controls .pet-controls { opacity: 1; transform: translateY(0); }
+    .pet-controls button {
+      width: 28px;
+      height: 28px;
+      border-radius: 9999px;
+      border: 1px solid var(--pl-border);
+      background: var(--pl-card);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      color: var(--pl-text);
+      font-size: 12px;
+      box-shadow: var(--pl-shadow);
+    }
+    .pet-controls button:hover { background: var(--pl-bg-2); }
+
+    /* ---------- Reduced motion ---------- */
+    @media (prefers-reduced-motion: reduce) {
+      .breathing, .pet-shadow, .tail, .blink { animation: none !important; }
+      .pupil, .head, .ear, .mouth, .pet-bubble, .pet-svg { transition: none !important; }
+    }
+
+    /* ---------- Mobile ---------- */
+    @media (max-width: 768px) {
+      .pet-root { width: 168px; height: 168px; bottom: 16px; right: 16px; }
+      .pet-root.dock { width: 48px; height: 48px; }
+      .pet-root.dock .pet-svg { transform: scale(0.32); }
+      .page { padding: 64px 20px 240px; }
+    }
+
+    /* ---------- Focus ring ---------- */
+    .pet-trigger:focus-visible {
+      outline: 2px solid var(--pl-gold);
+      outline-offset: 4px;
+      border-radius: 28%;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <p class="eyebrow">PandaLingo Buddy</p>
+    <h1>Speak <em>naturally.</em></h1>
+    <p class="lede">
+      A friendly panda that floats, listens, encourages, and helps learners on their journey.
+      Every conversation builds confidence.
+    </p>
+
+    <div class="features">
+      <article class="feature">
+        <h3>Always accessible</h3>
+        <p>Floats on bottom-right, never blocks the page.</p>
+      </article>
+      <article class="feature">
+        <h3>Encouraging</h3>
+        <p>Gentle reactions, warm messages, helpful tips.</p>
+      </article>
+      <article class="feature">
+        <h3>Lightweight</h3>
+        <p>Pure inline SVG, no external character artwork.</p>
+      </article>
+    </div>
+
+    <div class="cta-row">
+      <button class="btn btn-primary" data-pet-target="cta-primary">Start a conversation</button>
+      <button class="btn btn-ghost" data-pet-target="cta-secondary">Browse lessons</button>
+    </div>
+  </main>
+
+  <!-- ============================== PET ============================== -->
+  <div id="pet-root" class="pet-root" data-anchor="bottom-right" aria-live="polite">
+    <div class="pet-shadow" aria-hidden="true"></div>
+
+    <button class="hit-area pet-trigger"
+            id="pet-trigger"
+            aria-label="PandaLingo Buddy. Click or tap to interact."
+            aria-haspopup="dialog"></button>
+
+    <div class="pet-svg" id="pet-svg-wrap">
+      <svg id="pet-svg" viewBox="0 0 200 200" role="img" aria-labelledby="pet-title pet-desc">
+        <title id="pet-title">PandaLingo Buddy</title>
+        <desc id="pet-desc">A friendly panda mascot with a warm scarf, breathing gently and looking forward.</desc>
+
+        <defs>
+          <radialGradient id="furGrad" cx="50%" cy="40%" r="65%">
+            <stop offset="0%" stop-color="#FBF7EE" />
+            <stop offset="70%" stop-color="#F6F1E9" />
+            <stop offset="100%" stop-color="#E7DFD2" />
+          </radialGradient>
+          <radialGradient id="bodyGrad" cx="50%" cy="35%" r="70%">
+            <stop offset="0%" stop-color="#FBF7EE" />
+            <stop offset="100%" stop-color="#E7DFD2" />
+          </radialGradient>
+          <linearGradient id="scarfGrad" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#D4A56F" />
+            <stop offset="100%" stop-color="#8B6A46" />
+          </linearGradient>
+        </defs>
+
+        <!-- TAIL -->
+        <g class="tail" data-part="tail" transform="translate(58 130)">
+          <ellipse cx="0" cy="0" rx="14" ry="9" fill="#2A2724" />
+        </g>
+
+        <!-- BACK LEGS -->
+        <g class="back-leg" data-part="back-leg-left">
+          <ellipse cx="78" cy="168" rx="14" ry="11" fill="#2A2724" />
+        </g>
+        <g class="back-leg" data-part="back-leg-right">
+          <ellipse cx="124" cy="168" rx="14" ry="11" fill="#2A2724" />
+        </g>
+
+        <!-- BODY (with breathing) -->
+        <g class="breathing" data-part="body">
+          <ellipse cx="100" cy="138" rx="48" ry="38" fill="url(#bodyGrad)" stroke="#DCD3C4" stroke-width="1" />
+
+          <!-- COAT/SWEATER -->
+          <path d="M58 134 Q100 110 142 134 Q142 158 100 168 Q58 158 58 134 Z"
+                fill="#D9C7AD" stroke="#C3AC8D" stroke-width="1" />
+          <path d="M100 116 L92 130 L108 130 Z" fill="#C3AC8D" opacity="0.6" />
+
+          <!-- FRONT PAWS holding tea cup -->
+          <ellipse class="paw paw-left"  cx="78"  cy="152" rx="11" ry="8" fill="#2A2724" />
+          <ellipse class="paw paw-right" cx="122" cy="152" rx="11" ry="8" fill="#2A2724" />
+        </g>
+
+        <!-- HEAD -->
+        <g class="head" data-part="head">
+          <!-- ears -->
+          <g class="ear left" data-part="ear-left">
+            <circle cx="64" cy="58" r="18" fill="#2A2724" />
+            <circle cx="64" cy="58" r="9" fill="#5A4A40" />
+          </g>
+          <g class="ear right" data-part="ear-right">
+            <circle cx="136" cy="58" r="18" fill="#2A2724" />
+            <circle cx="136" cy="58" r="9" fill="#5A4A40" />
+          </g>
+
+          <!-- face -->
+          <ellipse cx="100" cy="92" rx="42" ry="40" fill="url(#furGrad)" stroke="#DCD3C4" stroke-width="1" />
+
+          <!-- eye patches -->
+          <ellipse cx="84"  cy="92" rx="13" ry="16" fill="#2A2724" transform="rotate(-12 84 92)" />
+          <ellipse cx="116" cy="92" rx="13" ry="16" fill="#2A2724" transform="rotate(12 116 92)" />
+
+          <!-- eyes (whites) -->
+          <g class="blink" data-part="eyes">
+            <ellipse class="eye eye-left"  cx="84"  cy="92" rx="4.2" ry="5.6" fill="#FFFFFF" />
+            <ellipse class="eye eye-right" cx="116" cy="92" rx="4.2" ry="5.6" fill="#FFFFFF" />
+
+            <!-- pupils - translated by JS for pointer tracking -->
+            <circle class="pupil" data-part="pupil-left"  cx="84"  cy="93" r="2.4" fill="#2A2724" />
+            <circle class="pupil" data-part="pupil-right" cx="116" cy="93" r="2.4" fill="#2A2724" />
+
+            <!-- highlights -->
+            <circle cx="85"  cy="91" r="0.9" fill="rgba(255,255,255,0.85)" />
+            <circle cx="117" cy="91" r="0.9" fill="rgba(255,255,255,0.85)" />
+          </g>
+
+          <!-- eyebrows -->
+          <g class="brows" data-part="brows">
+            <path class="brow brow-left"  d="M76 78 Q84 75 92 79" stroke="#2A2724" stroke-width="2" fill="none" stroke-linecap="round" />
+            <path class="brow brow-right" d="M108 79 Q116 75 124 78" stroke="#2A2724" stroke-width="2" fill="none" stroke-linecap="round" />
+          </g>
+
+          <!-- muzzle -->
+          <ellipse cx="100" cy="108" rx="16" ry="10" fill="#FFFDF9" stroke="#DCD3C4" stroke-width="0.6" />
+
+          <!-- nose -->
+          <path d="M97 102 Q100 99 103 102 Q102 105 100 105 Q98 105 97 102 Z" fill="#2A2724" />
+
+          <!-- mouth -->
+          <path class="mouth" data-part="mouth"
+                d="M100 108 L100 113 M100 113 Q96 117 92 114 M100 113 Q104 117 108 114"
+                stroke="#2A2724" stroke-width="1.6" fill="none" stroke-linecap="round" />
+
+          <!-- cheek blush -->
+          <circle class="cheek cheek-left"  cx="74"  cy="104" r="4" fill="rgba(182,140,90,0.22)" />
+          <circle class="cheek cheek-right" cx="126" cy="104" r="4" fill="rgba(182,140,90,0.22)" />
+
+          <!-- SCARF -->
+          <g class="scarf" data-part="scarf">
+            <path d="M62 118 Q100 134 138 118 L138 128 Q100 142 62 128 Z" fill="url(#scarfGrad)" />
+            <path d="M118 124 L132 154 L128 158 L114 130 Z" fill="#8B6A46" />
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Speech bubble -->
+    <div class="pet-bubble" id="pet-bubble" role="status" aria-live="polite">
+      <div class="bubble-text" id="bubble-text">Hi there. Ready to practice?</div>
+      <div class="bubble-actions" id="bubble-actions" hidden>
+        <button data-action="next">Next</button>
+        <button data-action="skip">Skip</button>
+        <button data-action="exit">Exit</button>
+      </div>
+    </div>
+
+    <!-- Controls (pause/hide) -->
+    <div class="pet-controls" aria-label="Pet controls">
+      <button id="pet-pause"  title="Pause" aria-label="Pause pet animations">‖</button>
+      <button id="pet-hide"   title="Hide"  aria-label="Hide pet">×</button>
+      <button id="pet-reset"  title="Reset" aria-label="Reset pet state">↺</button>
+    </div>
+  </div>
+
+  <script type="module">
+    // ------------------------------------------------------------------
+    // PandaLingo Buddy — Inline SVG implementation
+    //
+    // Architecture
+    //   - One fixed overlay root with pointer-events: none; only the
+    //     pet hit-area, speech bubble, and controls consume input.
+    //   - All animation is CSS (transform/opacity) plus minimal JS for
+    //     pointer tracking and idle scheduling. No per-frame React-like
+    //     state churn.
+    //   - Mood + needs live in a tiny reducer; persistence is a
+    //     schema-versioned snapshot in localStorage with safe clamping.
+    // ------------------------------------------------------------------
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const LS_KEY  = 'pl-pet-snapshot-v1';
+
+    // ---------------- Brand palette (numeric for SVG) ----------------
+    const COLORS = {
+      fur: '#F6F1E9', furShade: '#E7DFD2', furLine: '#DCD3C4',
+      ink: '#2A2724', inkSoft: '#3C3832', muzzle: '#FFFDF9',
+      scarf: '#B68C5A', scarfDeep: '#8B6A46',
+      coat: '#D9C7AD', coatShade: '#C3AC8D',
+      gold: '#B68C5A', brown: '#8B6A46',
+      blush: 'rgba(182,140,90,0.22)',
+    };
+
+    // ---------------- Domain types ----------------
+    /** @typedef {'neutral'|'happy'|'excited'|'curious'|'tired'|'hungry'|'lonely'} Mood */
+    /** @typedef {'baby'|'young'|'adult'} Stage */
+    /** @typedef {{energy:number,hunger:number,affection:number,curiosity:number,trust:number}} Needs */
+
+    const clamp = (v, lo, hi) => {
+      const n = Number.isFinite(v) ? v : lo;
+      return n < lo ? lo : n > hi ? hi : n;
+    };
+    const lerp  = (a, b, t) => a + (b - a) * t;
+    const now   = () => Date.now();
+    const rand  = (lo, hi) => lo + Math.random() * (hi - lo);
+
+    // ---------------- Persistence ----------------
+    function defaultSnapshot() {
+      return {
+        schemaVersion: 1,
+        bornAt: now(),
+        lastUpdatedAt: now(),
+        stage: 'baby',
+        stageProgress: 0,
+        xp: 0,
+        energy: 82,
+        hunger: 26,
+        affection: 58,
+        curiosity: 64,
+        trust: 30,
+        hidden: false,
+        paused: false,
+        muted: false,
+        motionOverride: null,
+      };
+    }
+    function loadSnapshot() {
+      try {
+        const raw = localStorage.getItem(LS_KEY);
+        if (!raw) return defaultSnapshot();
+        const parsed = JSON.parse(raw);
+        return migrateSnapshot(parsed);
+      } catch (err) {
+        console.warn('[pet] bad snapshot, resetting', err);
+        return defaultSnapshot();
+      }
+    }
+    function migrateSnapshot(raw) {
+      const base = defaultSnapshot();
+      if (!raw || typeof raw !== 'object') return base;
+      // future migrations would branch on schemaVersion here
+      return {
+        ...base,
+        ...raw,
+        schemaVersion: 1,
+        energy:     clamp(raw.energy,     0, 100),
+        hunger:     clamp(raw.hunger,     0, 100),
+        affection:  clamp(raw.affection,  0, 100),
+        curiosity:  clamp(raw.curiosity,  0, 100),
+        trust:      clamp(raw.trust,      0, 100),
+        xp:         Math.max(0, Number(raw.xp) || 0),
+        stage:      ['baby','young','adult'].includes(raw.stage) ? raw.stage : 'baby',
+        stageProgress: clamp(raw.stageProgress ?? 0, 0, 1),
+      };
+    }
+    let saveTimer = 0;
+    function scheduleSave(snap) {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        try { localStorage.setItem(LS_KEY, JSON.stringify(snap)); }
+        catch (e) { /* quota / private mode */ }
+      }, 250);
+    }
+
+    // ---------------- Mood derivation ----------------
+    const MOOD_HYSTERESIS = 8;
+    const MOOD_DWELL_MS = 4000;
+    function scoreMoods(needs) {
+      const tired   = Math.max(0, 40 - needs.energy) * 2;
+      const hungry  = Math.max(0, needs.hunger - 45) * 1.8;
+      const lonely  = Math.max(0, 35 - needs.affection) * 1.8;
+      const curious = Math.max(0, needs.curiosity - 55) * 1.2;
+      const happy   = Math.min(60, Math.max(0, needs.affection - 60) * 0.4);
+      const excited = needs.energy > 25 ? Math.min(70, needs.trust * 0.5) : 0;
+      const neutral = 18;
+      return { neutral, happy, excited, curious, tired, hungry, lonely };
+    }
+    function deriveMood(s) {
+      const scores = scoreMoods(s);
+      let best = 'neutral';
+      for (const k of Object.keys(scores)) if (scores[k] > scores[best]) best = k;
+      if (!s._mood) return { mood: best, scores };
+      if (best === s._mood) return { mood: s._mood, scores };
+      const dwelled = now() - (s._moodChangedAt ?? 0) >= MOOD_DWELL_MS;
+      const clear   = scores[best] >= scores[s._mood] + MOOD_HYSTERESIS;
+      return { mood: (dwelled && clear) ? best : s._mood, scores };
+    }
+
+    // ---------------- Pet controller ----------------
+    const pet = {
+      root:    document.getElementById('pet-root'),
+      svgWrap: document.getElementById('pet-svg-wrap'),
+      trigger: document.getElementById('pet-trigger'),
+      bubble:  document.getElementById('pet-bubble'),
+      bubbleText: document.getElementById('bubble-text'),
+      bubbleActions: document.getElementById('bubble-actions'),
+      controls: {
+        pause: document.getElementById('pet-pause'),
+        hide:  document.getElementById('pet-hide'),
+        reset: document.getElementById('pet-reset'),
+      },
+      // parts (looked up once)
+      parts: {},
+      // live state
+      state: loadSnapshot(),
+      _mood: null,
+      _moodChangedAt: 0,
+      _lastInteract: 0,
+      _pointer: { x: 0, y: 0, inside: false },
+      _petting: { active: false, distance: 0, rewarded: false },
+      _guide: null,
+      _idleLast: {},
+      _bubbleTimer: 0,
+      _petAnimFrame: 0,
+
+      init() {
+        this.cacheParts();
+        this.bindEvents();
+        this.tickLoop();
+        this.scheduleIdle();
+        // Always start visible — hidden is a user toggle, not a default.
+        this.root.style.display = '';
+        this.greetOnReturn();
+      },
+
+      cacheParts() {
+        const q = (sel) => this.root.querySelector(sel);
+        this.parts = {
+          svg:        q('svg'),
+          head:       q('[data-part="head"]'),
+          eyeL:       q('.eye-left'),
+          eyeR:       q('.eye-right'),
+          pupilL:     q('[data-part="pupil-left"]'),
+          pupilR:     q('[data-part="pupil-right"]'),
+          mouth:      q('[data-part="mouth"]'),
+          earL:       q('[data-part="ear-left"]'),
+          earR:       q('[data-part="ear-right"]'),
+          tail:       q('[data-part="tail"]'),
+          browL:      q('.brow-left'),
+          browR:      q('.brow-right'),
+          cheekL:     q('.cheek-left'),
+          cheekR:     q('.cheek-right'),
+          scarf:      q('[data-part="scarf"]'),
+        };
+      },
+
+      bindEvents() {
+        // pointer tracking at the document level so the pet can look at
+        // the cursor even when the user is over other content
+        document.addEventListener('pointermove', (e) => {
+          this._pointer.x = e.clientX;
+          this._pointer.y = e.clientY;
+        }, { passive: true });
+
+        // typing awareness — calm down while typing
+        document.addEventListener('focusin', (e) => {
+          const t = e.target;
+          if (t && (t.matches('input, textarea, [contenteditable="true"]'))) {
+            this._typing = true;
+          }
+        });
+        document.addEventListener('focusout', () => {
+          // delay, in case focus moves between inputs
+          setTimeout(() => {
+            const ae = document.activeElement;
+            this._typing = ae && (ae.matches('input, textarea, [contenteditable="true"]'));
+          }, 50);
+        });
+
+        // click on pet
+        this.trigger.addEventListener('click', () => this.onClick());
+        this.trigger.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.onClick(); }
+        });
+
+        // petting — pointerdown on the pet starts a drag
+        this.trigger.addEventListener('pointerdown', (e) => {
+          if (e.button !== 0) return;
+          this._petting = { active: true, distance: 0, lastX: e.clientX, lastY: e.clientY, rewarded: false };
+          this.trigger.setPointerCapture(e.pointerId);
+        });
+        this.trigger.addEventListener('pointermove', (e) => {
+          if (!this._petting.active) return;
+          const dx = e.clientX - (this._petting.lastX ?? e.clientX);
+          const dy = e.clientY - (this._petting.lastY ?? e.clientY);
+          this._petting.distance += Math.hypot(dx, dy);
+          this._petting.lastX = e.clientX;
+          this._petting.lastY = e.clientY;
+          if (this._petting.distance > 60 && !this._petting.rewarded) {
+            this._petting.rewarded = true;
+            this.onPetted();
+          }
+        });
+        const endPet = () => {
+          this._petting = { active: false, distance: 0, rewarded: false };
+        };
+        this.trigger.addEventListener('pointerup', endPet);
+        this.trigger.addEventListener('pointercancel', endPet);
+
+        // controls
+        this.controls.pause.addEventListener('click', () => {
+          this.state.paused = !this.state.paused;
+          this.root.style.setProperty('--pl-anim-state', this.state.paused ? 'paused' : 'running');
+          // toggle breathing via class
+          this.root.classList.toggle('paused', this.state.paused);
+          scheduleSave(this.state);
+          this.speak(this.state.paused ? 'Paused. I\'ll wait.' : 'Back in action!');
+        });
+        this.controls.hide.addEventListener('click', () => {
+          this.state.hidden = true;
+          this.root.style.display = 'none';
+          scheduleSave(this.state);
+        });
+        this.controls.reset.addEventListener('click', () => {
+          try { localStorage.removeItem(LS_KEY); } catch (e) {}
+          this.state = defaultSnapshot();
+          this._mood = null;
+          this.greet();
+        });
+
+        // speech bubble action buttons
+        this.bubbleActions.querySelectorAll('button').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const a = btn.dataset.action;
+            if (a === 'exit') { this._guide = null; this.hideBubble(); }
+            if (a === 'skip') { this.nextGuide(true); }
+            if (a === 'next') { this.nextGuide(false); }
+          });
+        });
+
+        // reduced motion
+        const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+        this._reduced = mq.matches;
+        mq.addEventListener?.('change', (e) => { this._reduced = e.matches; });
+
+        // pause when hidden
+        document.addEventListener('visibilitychange', () => {
+          this._visible = !document.hidden;
+        });
+
+        // guide demo: find buttons and walk to them on demand
+        document.querySelectorAll('[data-pet-target]').forEach((el) => {
+          el.addEventListener('click', () => {
+            this.affect({ affection: 2, trust: 1 });
+            this.flair('happy');
+          });
+        });
+
+        // small keyboard accessibility for controls
+        this.root.addEventListener('mouseenter', () => this.root.classList.add('show-controls'));
+        this.root.addEventListener('mouseleave', () => this.root.classList.remove('show-controls'));
+
+        // No auto-guide — the pet stays in its dock until the user interacts.
+        // (Guide walking is opt-in via clicking a [data-pet-target] button.)
+      },
+
+      // ---------- interactions ----------
+      onClick() {
+        if (this.state.paused) return;
+        const w = this.root.getBoundingClientRect();
+        this.flair('squash');
+        this.affect({ affection: 3, curiosity: 3, trust: 0.5 });
+        // context-aware speech
+        const line = pickClickLine(this.state);
+        this.speak(line);
+        this._lastInteract = now();
+        this.state.lastInteractionAt = this._lastInteract;
+        scheduleSave(this.state);
+      },
+      onPetted() {
+        this.affect({ affection: 14, trust: 4, energy: -1 });
+        this.flair('bounce');
+        this.speak(pickPettedLine());
+      },
+      affect(deltas) {
+        for (const k of Object.keys(deltas)) {
+          this.state[k] = clamp((this.state[k] ?? 0) + deltas[k], 0, 100);
+        }
+        this.state.lastUpdatedAt = now();
+        scheduleSave(this.state);
+      },
+      greet() {
+        this.speak(pickGreetLine(this.state));
+      },
+      greetOnReturn() {
+        if (!this.state.lastInteractionAt) { this.greet(); return; }
+        const dt = now() - this.state.lastInteractionAt;
+        if (dt > 30 * 60 * 1000) {
+          this.speak(pickReturnLine(dt));
+        }
+      },
+      // ---------- speech ----------
+      speak(text, opts = {}) {
+        this.bubbleText.textContent = text;
+        this.bubble.classList.add('show');
+        clearTimeout(this._bubbleTimer);
+        if (!opts.sticky) {
+          this._bubbleTimer = setTimeout(() => this.hideBubble(), 4200);
+        }
+        if (opts.actions) {
+          this.bubbleActions.hidden = false;
+        } else {
+          this.bubbleActions.hidden = true;
+        }
+      },
+      hideBubble() { this.bubble.classList.remove('show'); },
+
+      // ---------- motion (CSS classes + small JS) ----------
+      flair(kind) {
+        if (this._reduced) return;
+        const root = this.root;
+        const wrap = this.svgWrap;
+        wrap.style.transition = 'transform 220ms cubic-bezier(0.22,0.61,0.36,1)';
+        if (kind === 'squash') {
+          wrap.style.transform = 'scale(0.93, 1.06)';
+          setTimeout(() => { wrap.style.transform = ''; }, 120);
+        } else if (kind === 'bounce') {
+          wrap.style.transform = 'translateY(-6px) scale(1.04, 0.97)';
+          setTimeout(() => { wrap.style.transform = ''; }, 160);
+        } else if (kind === 'happy') {
+          this.parts.tail?.classList.add('tail-happy');
+          setTimeout(() => this.parts.tail?.classList.remove('tail-happy'), 3000);
+        }
+      },
+
+      // ---------- idle scheduler ----------
+      scheduleIdle() {
+        const loop = () => {
+          if (!this.state.paused && !this._typing && this._visible !== false) {
+            const { mood } = deriveMood(this.state);
+            this._mood = mood;
+            const t = now();
+            const lastEar = this._idleLast.earTwitch ?? 0;
+            const lastLook = this._idleLast.lookAround ?? 0;
+            const lastYawn = this._idleLast.yawn ?? 0;
+            if (mood === 'tired' && t - lastYawn > 26000 && Math.random() < 0.04) {
+              this._idleLast.yawn = t; this.doYawn();
+            } else if (t - lastLook > 9000 && Math.random() < 0.03) {
+              this._idleLast.lookAround = t; this.doLookAround();
+            } else if (t - lastEar > 7000 && Math.random() < 0.05) {
+              this._idleLast.earTwitch = t; this.doEarTwitch();
+            }
+          }
+          setTimeout(loop, 600);
+        };
+        loop();
+      },
+
+      doYawn() {
+        if (!this.parts.mouth) return;
+        this.parts.mouth.setAttribute('d', 'M100 113 Q92 122 100 122 Q108 122 100 113 Z');
+        setTimeout(() => {
+          this.parts.mouth.setAttribute('d', 'M100 108 L100 113 M100 113 Q96 117 92 114 M100 113 Q104 117 108 114');
+        }, 1200);
+      },
+      doLookAround() {
+        if (!this.parts.head) return;
+        this.parts.head.style.transform = 'translateX(8px) rotate(-3deg)';
+        setTimeout(() => { this.parts.head.style.transform = ''; }, 700);
+      },
+      doEarTwitch() {
+        if (!this.parts.earL) return;
+        this.parts.earL.style.transform = 'rotate(-12deg)';
+        this.parts.earR.style.transform = 'rotate(8deg)';
+        setTimeout(() => {
+          this.parts.earL.style.transform = '';
+          this.parts.earR.style.transform = '';
+        }, 380);
+      },
+
+      // ---------- main pointer-tracking tick ----------
+      tickLoop() {
+        let last = performance.now();
+        const tick = (t) => {
+          this._petAnimFrame = requestAnimationFrame(tick);
+          const dt = Math.min(64, t - last); last = t;
+          if (this._reduced || this.state.paused || this._visible === false) return;
+          this.applyPointer(dt);
+          this.applyMood();
+        };
+        this._petAnimFrame = requestAnimationFrame(tick);
+      },
+      applyPointer(dt) {
+        const rect = this.root.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height * 0.55;
+        const dx = this._pointer.x - cx;
+        const dy = this._pointer.y - cy;
+        const dist = Math.hypot(dx, dy);
+        const mag = Math.min(1, dist / 360);
+        // clamp pupil movement to a small range
+        const px = clamp(dx / 30, -3, 3) * mag;
+        const py = clamp(dy / 30, -2.5, 2.5) * mag;
+        if (this.parts.pupilL) {
+          this.parts.pupilL.setAttribute('cx', 84 + px);
+          this.parts.pupilL.setAttribute('cy', 93 + py);
+        }
+        if (this.parts.pupilR) {
+          this.parts.pupilR.setAttribute('cx', 116 + px);
+          this.parts.pupilR.setAttribute('cy', 93 + py);
+        }
+        // delayed, clamped head tracking
+        const targetHeadX = clamp(dx / 12, -6, 6);
+        const targetHeadY = clamp(dy / 14, -4, 4);
+        const cur = this.parts.head?.style;
+        if (cur) {
+          const curX = parseFloat(cur.getPropertyValue('--hx') || '0') || 0;
+          const curY = parseFloat(cur.getPropertyValue('--hy') || '0') || 0;
+          const nx = curX + (targetHeadX - curX) * 0.04;
+          const ny = curY + (targetHeadY - curY) * 0.04;
+          cur.setProperty('--hx', nx);
+          cur.setProperty('--hy', ny);
+          this.parts.head.style.transform = `translate(${nx}px, ${ny}px)`;
+        }
+      },
+      applyMood() {
+        const { mood } = deriveMood(this.state);
+        if (mood !== this._mood) {
+          this._mood = mood;
+          this._moodChangedAt = now();
+        }
+        // tail mood class
+        this.parts.tail?.classList.toggle('tail-happy', mood === 'happy' || mood === 'excited');
+        this.parts.tail?.classList.toggle('tail-sad',   mood === 'lonely' || mood === 'tired');
+        // brows
+        const flat = mood === 'happy' || mood === 'excited';
+        if (this.parts.browL) this.parts.browL.setAttribute('d', flat ? 'M76 78 Q84 76 92 79' : 'M76 76 Q84 73 92 78');
+        if (this.parts.browR) this.parts.browR.setAttribute('d', flat ? 'M108 79 Q116 76 124 78' : 'M108 78 Q116 73 124 76');
+        // mouth
+        if (this.parts.mouth && mood === 'happy') {
+          this.parts.mouth.setAttribute('d', 'M100 113 Q96 119 92 116 M100 113 Q104 119 108 116');
+        }
+        // cheeks
+        if (mood === 'happy' || mood === 'excited') {
+          this.parts.cheekL?.setAttribute('r', '5.2');
+          this.parts.cheekR?.setAttribute('r', '5.2');
+        } else {
+          this.parts.cheekL?.setAttribute('r', '4');
+          this.parts.cheekR?.setAttribute('r', '4');
+        }
+      },
+
+      // ---------- guide (tutorial) ----------
+      startDemoGuide() {
+        const target = document.querySelector('[data-pet-target="cta-primary"]');
+        if (!target) return;
+        this._guide = {
+          step: 0,
+          steps: [
+            { id: 'cta-primary', message: 'This is the Start button. Try it when you\'re ready.' },
+            { id: 'cta-secondary', message: 'Browse lessons first if you prefer a slower pace.' },
+          ],
+        };
+        this.runGuideStep();
+      },
+      runGuideStep() {
+        const step = this._guide?.steps[this._guide.step];
+        if (!step) { this._guide = null; this.speak('Happy learning!'); return; }
+        const target = document.querySelector(`[data-pet-target="${step.id}"]`);
+        if (!target) {
+          this.speak(`I can't find ${step.id}. Skipping.`, { sticky: true });
+          return;
+        }
+        const rect = target.getBoundingClientRect();
+        // place pet to the right of the target, falling back to below
+        const place = (Math.random() < 0.5) ? 'right' : 'below';
+        const petSize = this.root.getBoundingClientRect();
+        const margin = 24;
+        const x = place === 'right'
+          ? Math.min(window.innerWidth - petSize.width - margin, rect.right + 16)
+          : rect.left + rect.width / 2 - petSize.width / 2;
+        const y = place === 'right'
+          ? Math.max(margin, rect.top + rect.height / 2 - petSize.height / 2)
+          : rect.bottom + 16;
+        this.root.dataset.anchor = 'free';
+        this.root.style.transform = `translate3d(${x - (window.innerWidth - this.root.offsetWidth - margin)}px, ${y - (window.innerHeight - this.root.offsetHeight - margin)}px, 0)`;
+        // simple: just set position absolute coordinates
+        this.root.style.left = `${Math.max(8, Math.min(window.innerWidth - petSize.width - 8, x))}px`;
+        this.root.style.top  = `${Math.max(8, Math.min(window.innerHeight - petSize.height - 8, y))}px`;
+        this.root.style.right = 'auto'; this.root.style.bottom = 'auto';
+        this.speak(step.message, { actions: true });
+        // auto-advance on target click
+        const advance = () => {
+          target.removeEventListener('click', advance);
+          this.nextGuide(false);
+        };
+        target.addEventListener('click', advance);
+      },
+      nextGuide(skipped) {
+        if (!this._guide) return;
+        if (skipped) this._guide.step = this._guide.steps.length;
+        else this._guide.step += 1;
+        this.runGuideStep();
+      },
+    };
+
+    // ---------------- Copy ----------------
+    function pickClickLine(state) {
+      const m = pickMood(state);
+      if (m === 'happy')   return 'Glad you\'re here.';
+      if (m === 'excited') return 'Let\'s speak together!';
+      if (m === 'tired')   return 'Hmm, I could use a quick rest.';
+      if (m === 'hungry')  return 'A small tea break sounds nice.';
+      if (m === 'lonely')  return 'It\'s good to see you.';
+      if (m === 'curious') return 'What shall we explore?';
+      return 'Hi there. Ready to practice?';
+    }
+    function pickPettedLine() {
+      const lines = ['That feels nice.', 'A little more, please.', 'Soft hands, warm heart.', 'Panda likes that.'];
+      return lines[Math.floor(Math.random() * lines.length)];
+    }
+    function pickGreetLine(state) {
+      return pickMood(state) === 'lonely' ? 'Welcome back.' : 'Hi there. Ready to practice?';
+    }
+    function pickReturnLine(dtMs) {
+      const h = dtMs / 3600e3;
+      if (h > 24) return 'Welcome back. Missed you.';
+      if (h > 6)  return 'Good to see you again.';
+      return 'Hi there.';
+    }
+    function pickMood(state) {
+      const { mood } = deriveMood(state);
+      return mood;
+    }
+
+    // expose for debug
+    window.__pet = pet;
+
+    pet.init();
+  </script>
+</body>
+</html>

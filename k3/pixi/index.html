@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>PandaLingo Buddy — PixiJS Pet</title>
+  <style>
+    /* ---------- Brand tokens ---------- */
+    :root {
+      --pl-bg: #F8F6F2;
+      --pl-bg-2: #F3EFE8;
+      --pl-card: #FFFFFF;
+      --pl-text: #1E1E1E;
+      --pl-muted: #6B6B6B;
+      --pl-gold: #B68C5A;
+      --pl-brown: #8B6A46;
+      --pl-dark: #232323;
+      --pl-success: #4F7A61;
+      --pl-border: rgba(0, 0, 0, 0.06);
+      --pl-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      --pl-shadow-lift: 0 16px 40px rgba(30, 26, 20, 0.10);
+      --pl-radius: 20px;
+      --pl-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+      --pl-fast: 150ms;
+      --pl-base: 250ms;
+      --pl-slow: 400ms;
+      --pl-font-display: 'Canela', 'Cormorant Garamond', 'Playfair Display', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+      --pl-font-body: Inter, 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: var(--pl-bg);
+      color: var(--pl-text);
+      font-family: var(--pl-font-body);
+      font-size: 18px;
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 96px 32px 320px;
+    }
+    .eyebrow {
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--pl-gold);
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-family: var(--pl-font-display);
+      font-weight: 400;
+      font-size: clamp(48px, 7vw, 88px);
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      margin: 0 0 24px;
+    }
+    h1 em { font-style: italic; color: var(--pl-gold); font-weight: 400; }
+    .lede { max-width: 560px; color: var(--pl-muted); font-size: 19px; margin-bottom: 56px; }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+    .feature {
+      background: var(--pl-card);
+      border: 1px solid var(--pl-border);
+      border-radius: var(--pl-radius);
+      padding: 24px 28px;
+      box-shadow: var(--pl-shadow);
+      transition: transform var(--pl-base) var(--pl-ease), box-shadow var(--pl-base) var(--pl-ease);
+    }
+    .feature:hover { transform: translateY(-2px); box-shadow: var(--pl-shadow-lift); }
+    .feature h3 { margin: 0 0 6px; font-size: 17px; }
+    .feature p { margin: 0; color: var(--pl-muted); font-size: 15px; line-height: 1.6; }
+    .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+      padding: 14px 22px;
+      border-radius: 9999px;
+      transition: background var(--pl-base) var(--pl-ease), transform var(--pl-fast) var(--pl-ease);
+    }
+    .btn-primary { background: var(--pl-dark); color: #fff; }
+    .btn-primary:hover { background: #353535; transform: translateY(-1px); }
+    .btn-ghost { background: transparent; color: var(--pl-text); border: 1px solid var(--pl-border); }
+    .btn-ghost:hover { background: var(--pl-bg-2); }
+
+    /* ---------- Pet root ---------- */
+    .pet-root {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 200px;
+      height: 200px;
+      z-index: 9999;
+      pointer-events: none;
+      transform: translate3d(0, 0, 0);
+      transition: bottom var(--pl-base) var(--pl-ease), right var(--pl-base) var(--pl-ease);
+    }
+    .pet-root.dock { width: 64px; height: 64px; }
+    .pet-root.dock canvas { transform: scale(0.43); transform-origin: center; }
+    .pet-root[data-anchor^="left"]   { right: auto; left: 24px; }
+    .pet-root[data-anchor^="right"]  { left: auto; right: 24px; }
+    .pet-root[data-anchor^="top"]    { bottom: auto; top: 24px; }
+    .pet-root canvas { pointer-events: none; width: 100%; height: 100%; display: block; }
+
+    .hit-area {
+      position: absolute;
+      inset: 8%;
+      border-radius: 28%;
+      background: transparent;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    .pet-bubble {
+      position: absolute;
+      left: -120%;
+      top: -10%;
+      width: 200px;
+      padding: 14px 18px;
+      background: var(--pl-card);
+      border: 1px solid var(--pl-border);
+      border-radius: 18px;
+      box-shadow: var(--pl-shadow-lift);
+      color: var(--pl-text);
+      font-size: 15px;
+      line-height: 1.5;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity var(--pl-base) var(--pl-ease), transform var(--pl-base) var(--pl-ease);
+      pointer-events: auto;
+    }
+    .pet-bubble::after {
+      content: "";
+      position: absolute;
+      right: 18px;
+      bottom: -8px;
+      width: 16px;
+      height: 16px;
+      background: var(--pl-card);
+      border-right: 1px solid var(--pl-border);
+      border-bottom: 1px solid var(--pl-border);
+      transform: rotate(45deg);
+    }
+    .pet-bubble.show { opacity: 1; transform: translateY(0); }
+    .pet-bubble .bubble-actions { display: flex; gap: 6px; margin-top: 10px; }
+    .pet-bubble .bubble-actions button {
+      appearance: none;
+      border: 0;
+      background: var(--pl-bg-2);
+      color: var(--pl-text);
+      font: inherit;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 9999px;
+      cursor: pointer;
+    }
+
+    .pet-controls {
+      position: absolute;
+      left: -28px;
+      top: -28px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity var(--pl-base) var(--pl-ease), transform var(--pl-base) var(--pl-ease);
+    }
+    .pet-root:hover .pet-controls,
+    .pet-root:focus-within .pet-controls,
+    .pet-root.show-controls .pet-controls { opacity: 1; transform: translateY(0); }
+    .pet-controls button {
+      width: 28px;
+      height: 28px;
+      border-radius: 9999px;
+      border: 1px solid var(--pl-border);
+      background: var(--pl-card);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      color: var(--pl-text);
+      font-size: 12px;
+      box-shadow: var(--pl-shadow);
+      pointer-events: auto;
+    }
+
+    @media (max-width: 768px) {
+      .pet-root { width: 168px; height: 168px; bottom: 16px; right: 16px; }
+      .pet-root.dock { width: 48px; height: 48px; }
+      .pet-root.dock canvas { transform: scale(0.32); }
+      .page { padding: 64px 20px 240px; }
+    }
+    .hit-area:focus-visible { outline: 2px solid var(--pl-gold); outline-offset: 4px; border-radius: 28%; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <p class="eyebrow">PandaLingo Buddy</p>
+    <h1>Speak <em>naturally.</em></h1>
+    <p class="lede">
+      A friendly panda that floats, listens, encourages, and helps learners on their journey.
+      Every conversation builds confidence.
+    </p>
+    <div class="features">
+      <article class="feature">
+        <h3>WebGL rendered</h3>
+        <p>PixiJS v8 — 60fps, transparent canvas, no external art.</p>
+      </article>
+      <article class="feature">
+        <h3>Encouraging</h3>
+        <p>Gentle reactions, warm messages, helpful tips.</p>
+      </article>
+      <article class="feature">
+        <h3>Lightweight</h3>
+        <p>Code-driven geometry, paused while hidden.</p>
+      </article>
+    </div>
+    <div class="cta-row">
+      <button class="btn btn-primary" data-pet-target="cta-primary">Start a conversation</button>
+      <button class="btn btn-ghost" data-pet-target="cta-secondary">Browse lessons</button>
+    </div>
+  </main>
+
+  <div id="pet-root" class="pet-root" data-anchor="bottom-right" aria-live="polite">
+    <button class="hit-area" id="pet-trigger"
+            aria-label="PandaLingo Buddy. Click or tap to interact."
+            aria-haspopup="dialog"></button>
+
+    <div class="pet-bubble" id="pet-bubble" role="status" aria-live="polite">
+      <div class="bubble-text" id="bubble-text">Hi there. Ready to practice?</div>
+      <div class="bubble-actions" id="bubble-actions" hidden>
+        <button data-action="next">Next</button>
+        <button data-action="skip">Skip</button>
+        <button data-action="exit">Exit</button>
+      </div>
+    </div>
+
+    <div class="pet-controls" aria-label="Pet controls">
+      <button id="pet-pause" title="Pause" aria-label="Pause pet animations">‖</button>
+      <button id="pet-hide"  title="Hide"  aria-label="Hide pet">×</button>
+      <button id="pet-reset" title="Reset" aria-label="Reset pet state">↺</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@8.6.6/dist/pixi.min.js"></script>
+  <script>
+  (() => {
+    'use strict';
+
+    const LS_KEY = 'pl-pixi-pet-snapshot-v1';
+
+    const clamp = (v, lo, hi) => {
+      const n = Number.isFinite(v) ? v : lo;
+      return n < lo ? lo : n > hi ? hi : n;
+    };
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const now  = () => Date.now();
+    const hex  = (h) => Number.parseInt(h.slice(1), 16);
+
+    const COL = {
+      fur: 0xF6F1E9,
+      furShade: 0xE7DFD2,
+      furLine: 0xDCD3C4,
+      ink: 0x2A2724,
+      muzzle: 0xFFFDF9,
+      scarf: 0xB68C5A,
+      scarfDeep: 0x8B6A46,
+      coat: 0xD9C7AD,
+      coatShade: 0xC3AC8D,
+    };
+
+    function defaultSnapshot() {
+      return {
+        schemaVersion: 1,
+        bornAt: now(),
+        lastUpdatedAt: now(),
+        stage: 'baby',
+        xp: 0,
+        energy: 82, hunger: 26, affection: 58, curiosity: 64, trust: 30,
+        hidden: false, paused: false,
+      };
+    }
+    function loadSnapshot() {
+      try {
+        const raw = localStorage.getItem(LS_KEY);
+        if (!raw) return defaultSnapshot();
+        const parsed = JSON.parse(raw);
+        return migrate(parsed);
+      } catch { return defaultSnapshot(); }
+    }
+    function migrate(raw) {
+      const base = defaultSnapshot();
+      if (!raw || typeof raw !== 'object') return base;
+      return {
+        ...base,
+        ...raw,
+        schemaVersion: 1,
+        energy:    clamp(raw.energy,    0, 100),
+        hunger:    clamp(raw.hunger,    0, 100),
+        affection: clamp(raw.affection, 0, 100),
+        curiosity: clamp(raw.curiosity, 0, 100),
+        trust:     clamp(raw.trust,     0, 100),
+        xp:        Math.max(0, Number(raw.xp) || 0),
+      };
+    }
+    let saveTimer = 0;
+    function scheduleSave(snap) {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        try { localStorage.setItem(LS_KEY, JSON.stringify(snap)); } catch (e) {}
+      }, 250);
+    }
+
+    function scoreMoods(needs) {
+      const tired   = Math.max(0, 40 - needs.energy) * 2;
+      const hungry  = Math.max(0, needs.hunger - 45) * 1.8;
+      const lonely  = Math.max(0, 35 - needs.affection) * 1.8;
+      const curious = Math.max(0, needs.curiosity - 55) * 1.2;
+      const happy   = Math.min(60, Math.max(0, needs.affection - 60) * 0.4);
+      const excited = needs.energy > 25 ? Math.min(70, needs.trust * 0.5) : 0;
+      const neutral = 18;
+      return { neutral, happy, excited, curious, tired, hungry, lonely };
+    }
+    function deriveMood(s) {
+      const scores = scoreMoods(s);
+      let best = 'neutral';
+      for (const k of Object.keys(scores)) if (scores[k] > scores[best]) best = k;
+      if (!s._mood) return { mood: best };
+      if (best === s._mood) return { mood: s._mood };
+      const dwelled = now() - (s._moodChangedAt ?? 0) >= 4000;
+      const clear   = scores[best] >= scores[s._mood] + 8;
+      return { mood: (dwelled && clear) ? best : s._mood };
+    }
+
+    const root   = document.getElementById('pet-root');
+    const hit    = document.getElementById('pet-trigger');
+    const bubble = document.getElementById('pet-bubble');
+    const bubbleText    = document.getElementById('bubble-text');
+    const bubbleActions = document.getElementById('bubble-actions');
+    const controls = {
+      pause: document.getElementById('pet-pause'),
+      hide:  document.getElementById('pet-hide'),
+      reset: document.getElementById('pet-reset'),
+    };
+
+    const state = loadSnapshot();
+    state._mood = null;
+
+    // PixiJS Application
+    const app = new PIXI.Application();
+    (async () => {
+      await app.init({
+        width: 400,
+        height: 400,
+        backgroundAlpha: 0,
+        antialias: true,
+        autoDensity: true,
+        resolution: Math.min(window.devicePixelRatio || 1, 2),
+      });
+      app.canvas.style.width = '100%';
+      app.canvas.style.height = '100%';
+      root.insertBefore(app.canvas, root.firstChild);
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) app.ticker.stop();
+        else if (!state.paused && !state.hidden) app.ticker.start();
+      });
+      buildScene();
+      pet.init();
+    })();
+
+    let scene, shadow, tail, body, head, earL, earR,
+        eyeWhiteL, eyeWhiteR, pupilL, pupilR, mouth,
+        cheekL, cheekR, particleLayer, scarf;
+    let browL, browR, muzzle, nose;
+
+    function buildScene() {
+      scene = new PIXI.Container();
+      scene.position.set(200, 200);
+      app.stage.addChild(scene);
+
+      // Shadow
+      shadow = new PIXI.Graphics();
+      shadow.ellipse(0, 85, 70, 10).fill({ color: 0x2A2724, alpha: 0.16 });
+      shadow.filters = [new PIXI.BlurFilter(8)];
+      scene.addChild(shadow);
+
+      // Tail
+      tail = new PIXI.Graphics();
+      tail.ellipse(0, 0, 14, 9).fill(COL.ink);
+      tail.pivot.set(14, 0);
+      tail.position.set(-52, 30);
+      scene.addChild(tail);
+
+      // Back legs
+      const backLegL = new PIXI.Graphics().ellipse(-22, 72, 14, 11).fill(COL.ink);
+      const backLegR = new PIXI.Graphics().ellipse( 22, 72, 14, 11).fill(COL.ink);
+      scene.addChild(backLegL, backLegR);
+
+      // Body container
+      body = new PIXI.Container();
+      scene.addChild(body);
+
+      // Body shape
+      const bodyG = new PIXI.Graphics();
+      bodyG.ellipse(0, 40, 48, 38)
+           .fill(COL.fur)
+           .stroke({ width: 1, color: COL.furLine });
+      bodyG.moveTo(-42, 34)
+           .quadraticCurveTo(0, 10, 42, 34)
+           .quadraticCurveTo(42, 58, 0, 68)
+           .quadraticCurveTo(-42, 58, -42, 34)
+           .closePath()
+           .fill(COL.coat)
+           .stroke({ width: 1, color: COL.coatShade });
+      body.addChild(bodyG);
+
+      // Front paws
+      const pawL = new PIXI.Graphics().ellipse(-22, 52, 11, 8).fill(COL.ink);
+      const pawR = new PIXI.Graphics().ellipse( 22, 52, 11, 8).fill(COL.ink);
+      body.addChild(pawL, pawR);
+
+      // Head container
+      head = new PIXI.Container();
+      head.position.set(0, -20);
+      scene.addChild(head);
+
+      // Ears — on top of head
+      earL = new PIXI.Container();
+      earL.addChild(new PIXI.Graphics().circle(0, 0, 18).fill(COL.ink));
+      earL.addChild(new PIXI.Graphics().circle(0, 0, 9).fill(0x5A4A40));
+      earL.position.set(-28, -34);
+      earL.pivot.set(0, 18);
+      head.addChild(earL);
+
+      earR = new PIXI.Container();
+      earR.addChild(new PIXI.Graphics().circle(0, 0, 18).fill(COL.ink));
+      earR.addChild(new PIXI.Graphics().circle(0, 0, 9).fill(0x5A4A40));
+      earR.position.set( 28, -34);
+      earR.pivot.set(0, 18);
+      head.addChild(earR);
+
+      // Face
+      const face = new PIXI.Graphics();
+      face.circle(0, 0, 40)
+          .fill(COL.fur)
+          .stroke({ width: 1, color: COL.furLine });
+      head.addChild(face);
+
+      // Eye patches
+      const patchL = new PIXI.Graphics().ellipse(0, 0, 12, 15).fill(COL.ink);
+      patchL.rotation = 0.2; patchL.position.set(-14, 0);
+      const patchR = new PIXI.Graphics().ellipse(0, 0, 12, 15).fill(COL.ink);
+      patchR.rotation = -0.2; patchR.position.set(14, 0);
+      head.addChild(patchL, patchR);
+
+      // Eye whites
+      eyeWhiteL = new PIXI.Graphics().ellipse(0, 0, 4, 5.5).fill(0xFFFFFF);
+      eyeWhiteR = new PIXI.Graphics().ellipse(0, 0, 4, 5.5).fill(0xFFFFFF);
+      eyeWhiteL.position.set(-14, 0); eyeWhiteR.position.set(14, 0);
+      head.addChild(eyeWhiteL, eyeWhiteR);
+
+      // Pupils
+      pupilL = new PIXI.Graphics().circle(0, 0, 2.2).fill(COL.ink);
+      pupilR = new PIXI.Graphics().circle(0, 0, 2.2).fill(COL.ink);
+      pupilL.position.set(-14, 1); pupilR.position.set(14, 1);
+      head.addChild(pupilL, pupilR);
+
+      // Brows
+      browL = new PIXI.Graphics().moveTo(-22, -12).quadraticCurveTo(-14, -15, -6, -11)
+                    .stroke({ width: 2, color: COL.ink, cap: 'round' });
+      browR = new PIXI.Graphics().moveTo( 6, -11).quadraticCurveTo( 14, -15, 22, -12)
+                    .stroke({ width: 2, color: COL.ink, cap: 'round' });
+      head.addChild(browL, browR);
+
+      // Muzzle
+      muzzle = new PIXI.Graphics().ellipse(0, 12, 14, 9)
+                .fill(COL.muzzle)
+                .stroke({ width: 0.6, color: COL.furLine });
+      head.addChild(muzzle);
+
+      // Nose
+      nose = new PIXI.Graphics().moveTo(-3, 7).quadraticCurveTo(0, 4, 3, 7).quadraticCurveTo(2, 10, 0, 10).quadraticCurveTo(-2, 10, -3, 7).closePath().fill(COL.ink);
+      head.addChild(nose);
+
+      // Mouth
+      mouth = new PIXI.Graphics();
+      redrawMouth('smile');
+      head.addChild(mouth);
+
+      // Cheeks
+      cheekL = new PIXI.Graphics().circle(-24, 10, 4).fill({ color: COL.scarf, alpha: 0.22 });
+      cheekR = new PIXI.Graphics().circle( 24, 10, 4).fill({ color: COL.scarf, alpha: 0.22 });
+      head.addChild(cheekL, cheekR);
+
+      // Scarf
+      scarf = new PIXI.Graphics();
+      scarf.moveTo(-34, 22).quadraticCurveTo(0, 38, 34, 22).lineTo(34, 32).quadraticCurveTo(0, 46, -34, 32).closePath()
+           .fill(COL.scarf);
+      scarf.moveTo(16, 28).lineTo(30, 58).lineTo(26, 62).lineTo(12, 34).closePath()
+           .fill(COL.scarfDeep);
+      head.addChild(scarf);
+
+      // Particle layer
+      particleLayer = new PIXI.Container();
+      scene.addChild(particleLayer);
+
+      body.pivot.set(0, 40);
+      head.pivot.set(0, 10);
+    }
+
+    function redrawMouth(kind) {
+      if (!mouth) return;
+      mouth.clear();
+      if (kind === 'smile') {
+        mouth.moveTo(0, 11).lineTo(0, 14)
+             .moveTo(0, 14).quadraticCurveTo(-4, 18, -7, 15)
+             .moveTo(0, 14).quadraticCurveTo( 4, 18,  7, 15);
+      } else if (kind === 'happy') {
+        mouth.moveTo(-7, 15).quadraticCurveTo(0, 20, 7, 15);
+      } else if (kind === 'open') {
+        mouth.moveTo(0, 11).lineTo(0, 14)
+             .moveTo(0, 15).quadraticCurveTo(-4, 20, 0, 20).quadraticCurveTo(4, 20, 0, 15);
+      }
+      mouth.stroke({ width: 1.6, color: COL.ink, cap: 'round' });
+    }
+
+    const pet = {
+      state,
+      _pointer: { x: 0, y: 0 },
+      _headSmooth: { x: 0, y: 0 },
+      _idleLast: {},
+      _mood: null,
+      _moodChangedAt: 0,
+      _lastInteract: 0,
+      _petting: { active: false, distance: 0, rewarded: false },
+      _typing: false,
+      _visible: true,
+      _reduced: false,
+      _bubbleTimer: 0,
+      _blinkUntil: 0,
+
+      init() {
+        this.bindEvents();
+        this.startTicker();
+        this.scheduleIdle();
+        if (state.hidden) root.style.display = 'none';
+        this.greet();
+      },
+
+      bindEvents() {
+        document.addEventListener('pointermove', (e) => {
+          this._pointer.x = e.clientX; this._pointer.y = e.clientY;
+        }, { passive: true });
+
+        document.addEventListener('focusin', (e) => {
+          const t = e.target;
+          if (t && t.matches && t.matches('input, textarea, [contenteditable="true"]')) this._typing = true;
+        });
+        document.addEventListener('focusout', () => {
+          setTimeout(() => {
+            const ae = document.activeElement;
+            this._typing = ae && ae.matches && ae.matches('input, textarea, [contenteditable="true"]');
+          }, 50);
+        });
+
+        hit.addEventListener('click', () => this.onClick());
+        hit.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.onClick(); }
+        });
+
+        hit.addEventListener('pointerdown', (e) => {
+          if (e.button !== 0) return;
+          this._petting = { active: true, distance: 0, lastX: e.clientX, lastY: e.clientY, rewarded: false };
+          hit.setPointerCapture(e.pointerId);
+        });
+        hit.addEventListener('pointermove', (e) => {
+          if (!this._petting.active) return;
+          const dx = e.clientX - (this._petting.lastX ?? e.clientX);
+          const dy = e.clientY - (this._petting.lastY ?? e.clientY);
+          this._petting.distance += Math.hypot(dx, dy);
+          this._petting.lastX = e.clientX; this._petting.lastY = e.clientY;
+          if (this._petting.distance > 60 && !this._petting.rewarded) {
+            this._petting.rewarded = true; this.onPetted();
+          }
+        });
+        const endPet = () => { this._petting = { active: false, distance: 0, rewarded: false }; };
+        hit.addEventListener('pointerup', endPet);
+        hit.addEventListener('pointercancel', endPet);
+
+        controls.pause.addEventListener('click', () => {
+          state.paused = !state.paused;
+          if (state.paused) app.ticker.stop(); else app.ticker.start();
+          scheduleSave(state);
+          this.speak(state.paused ? 'Paused. I\'ll wait.' : 'Back in action!');
+        });
+        controls.hide.addEventListener('click', () => {
+          state.hidden = true; root.style.display = 'none';
+          app.ticker.stop();
+          scheduleSave(state);
+        });
+        controls.reset.addEventListener('click', () => {
+          try { localStorage.removeItem(LS_KEY); } catch (e) {}
+          Object.assign(state, defaultSnapshot());
+          this._mood = null;
+          this.greet();
+        });
+
+        bubbleActions.querySelectorAll('button').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const a = btn.dataset.action;
+            if (a === 'exit') this.hideBubble();
+          });
+        });
+
+        const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+        this._reduced = mq.matches;
+        mq.addEventListener?.('change', (e) => { this._reduced = e.matches; });
+
+        document.addEventListener('visibilitychange', () => { this._visible = !document.hidden; });
+
+        document.querySelectorAll('[data-pet-target]').forEach((el) => {
+          el.addEventListener('click', () => {
+            this.affect({ affection: 2, trust: 1 });
+            this.flair('happy');
+          });
+        });
+
+        root.addEventListener('mouseenter', () => root.classList.add('show-controls'));
+        root.addEventListener('mouseleave', () => root.classList.remove('show-controls'));
+
+        // No auto-guide — pet stays docked until user interacts.
+      },
+
+      onClick() {
+        if (state.paused) return;
+        this.flair('squash');
+        this.affect({ affection: 3, curiosity: 3, trust: 0.5 });
+        this.speak(pickClickLine());
+        this._lastInteract = now();
+        state.lastInteractionAt = this._lastInteract;
+        scheduleSave(state);
+      },
+      onPetted() {
+        this.affect({ affection: 14, trust: 4, energy: -1 });
+        this.flair('bounce');
+        this.speak(pickPettedLine());
+        this.spawnHeart();
+      },
+      affect(deltas) {
+        for (const k of Object.keys(deltas)) {
+          state[k] = clamp((state[k] ?? 0) + deltas[k], 0, 100);
+        }
+        state.lastUpdatedAt = now();
+        scheduleSave(state);
+      },
+      greet() { this.speak('Hi there. Ready to practice?'); },
+
+      speak(text) {
+        bubbleText.textContent = text;
+        bubble.classList.add('show');
+        bubbleActions.hidden = true;
+        clearTimeout(this._bubbleTimer);
+        this._bubbleTimer = setTimeout(() => this.hideBubble(), 4200);
+      },
+      hideBubble() { bubble.classList.remove('show'); },
+
+      flair(kind) {
+        if (this._reduced) return;
+        if (kind === 'squash') {
+          scene.scale.set(0.93, 1.06);
+          setTimeout(() => scene.scale.set(1, 1), 120);
+        } else if (kind === 'bounce') {
+          scene.position.y = 194;
+          setTimeout(() => scene.position.y = 200, 160);
+        } else if (kind === 'happy') {
+          tail.pivot.set(0, 0);
+        }
+      },
+
+      spawnHeart() {
+        const g = new PIXI.Graphics();
+        g.moveTo(0, 0)
+         .bezierCurveTo(-4, -4, -8, 0, 0, 6)
+         .bezierCurveTo( 8, 0,  4, -4, 0, 0)
+         .closePath()
+         .fill({ color: 0xB68C5A, alpha: 0.9 });
+        g.position.set(20, -50);
+        g.scale.set(0.6);
+        particleLayer.addChild(g);
+        const start = now();
+        const cb = () => {
+          const dt = Math.min(64, app.ticker.deltaMS);
+          g.position.y -= 0.05 * dt;
+          g.alpha = Math.max(0, 1 - (now() - start) / 1200);
+          g.scale.set(0.6 + (now() - start) / 2000);
+          if (now() - start > 1200) {
+            particleLayer.removeChild(g);
+            g.destroy();
+            app.ticker.remove(cb);
+          }
+        };
+        app.ticker.add(cb);
+      },
+
+      scheduleIdle() {
+        const loop = () => {
+          if (!state.paused && !this._typing && this._visible) {
+            const { mood } = deriveMood(state);
+            this._mood = mood;
+            const t = now();
+            const lastYawn = this._idleLast.yawn ?? 0;
+            const lastLook = this._idleLast.lookAround ?? 0;
+            const lastEar  = this._idleLast.earTwitch ?? 0;
+            if (mood === 'tired' && t - lastYawn > 26000 && Math.random() < 0.04) {
+              this._idleLast.yawn = t; this.doYawn();
+            } else if (t - lastLook > 9000 && Math.random() < 0.03) {
+              this._idleLast.lookAround = t; this.doLookAround();
+            } else if (t - lastEar > 7000 && Math.random() < 0.05) {
+              this._idleLast.earTwitch = t; this.doEarTwitch();
+            }
+          }
+          setTimeout(loop, 600);
+        };
+        loop();
+      },
+      doYawn() {
+        redrawMouth('open');
+        setTimeout(() => redrawMouth('smile'), 1100);
+      },
+      doLookAround() {
+        const sx = this._headSmooth.x;
+        this._headSmooth.x = 8;
+        this._headSmooth.y = -2;
+        setTimeout(() => {
+          this._headSmooth.x = sx;
+          this._headSmooth.y = 0;
+        }, 700);
+      },
+      doEarTwitch() {
+        const origL = earL.rotation; const origR = earR.rotation;
+        earL.rotation = -0.25; earR.rotation = 0.18;
+        setTimeout(() => { earL.rotation = origL; earR.rotation = origR; }, 380);
+      },
+
+      startTicker() {
+        const start = performance.now();
+        app.ticker.add(() => {
+          if (this._reduced || state.paused || !this._visible) return;
+          const t = (performance.now() - start) / 1000;
+
+          const breath = Math.sin(t * 1.7) * 0.018;
+          body.scale.set(1 + breath, 1 + breath * 1.2);
+          body.y = Math.sin(t * 1.7) * 1.4;
+          shadow.scale.set(1 - breath * 0.6);
+          shadow.alpha = 0.85 - breath * 0.25;
+
+          const wag = (this._mood === 'happy' || this._mood === 'excited')
+            ? Math.sin(t * 4.4) * 0.18
+            : (this._mood === 'lonely' || this._mood === 'tired')
+              ? -0.18
+              : Math.sin(t * 1.6) * 0.05;
+          tail.rotation = wag;
+
+          const rect = root.getBoundingClientRect();
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height * 0.55;
+          const dx = this._pointer.x - cx;
+          const dy = this._pointer.y - cy;
+          const mag = Math.min(1, Math.hypot(dx, dy) / 360);
+          const px = clamp(dx / 30, -3, 3) * mag;
+          const py = clamp(dy / 30, -2.5, 2.5) * mag;
+          pupilL.position.set(-14 + px, 1 + py);
+          pupilR.position.set( 14 + px, 1 + py);
+
+          const tx = clamp(dx / 12, -6, 6);
+          const ty = clamp(dy / 14, -4, 4);
+          this._headSmooth.x += (tx - this._headSmooth.x) * 0.04;
+          this._headSmooth.y += (ty - this._headSmooth.y) * 0.04;
+          head.x = this._headSmooth.x;
+          head.y = -20 + this._headSmooth.y;
+
+          if (t > 1) {
+            const nowMs = now();
+            if (nowMs > this._blinkUntil) {
+              if (Math.random() < 0.012) {
+                this._blinkUntil = nowMs + 130;
+              } else {
+                this._blinkUntil = nowMs + 2200 + Math.random() * 3500;
+              }
+            }
+            if (nowMs < this._blinkUntil) {
+              const blinkT = (this._blinkUntil - nowMs) / 130;
+              eyeWhiteL.scale.y = blinkT; eyeWhiteR.scale.y = blinkT;
+              pupilL.scale.y = blinkT;    pupilR.scale.y = blinkT;
+            } else {
+              eyeWhiteL.scale.y = 1; eyeWhiteR.scale.y = 1;
+              pupilL.scale.y = 1;    pupilR.scale.y = 1;
+            }
+          }
+
+          const { mood } = deriveMood(state);
+          if (mood !== this._mood) { this._mood = mood; this._moodChangedAt = now(); }
+          if (mood === 'happy' || mood === 'excited') {
+            redrawMouth('happy');
+            cheekL.scale.set(1.3); cheekR.scale.set(1.3);
+            earL.rotation = lerp(earL.rotation, -0.05, 0.05);
+            earR.rotation = lerp(earR.rotation,  0.05, 0.05);
+          } else {
+            redrawMouth('smile');
+            cheekL.scale.set(1); cheekR.scale.set(1);
+          }
+
+          if (mood === 'tired' || mood === 'hungry') {
+            scene.position.y = 204;
+          } else {
+            scene.position.y = 200;
+          }
+        });
+      },
+
+      startDemoGuide() {
+        const target = document.querySelector('[data-pet-target="cta-primary"]');
+        if (!target) return;
+        const walkTo = (target) => {
+          const r = target.getBoundingClientRect();
+          const w = root.getBoundingClientRect();
+          const x = Math.max(8, Math.min(window.innerWidth - w.width - 8, r.right + 16));
+          const y = Math.max(8, Math.min(window.innerHeight - w.height - 8, r.top + r.height / 2 - w.height / 2));
+          root.dataset.anchor = 'free';
+          root.style.left = `${x}px`;
+          root.style.top  = `${y}px`;
+          root.style.right = 'auto'; root.style.bottom = 'auto';
+          this.speak('This is the Start button. Try it when you\'re ready.');
+        };
+        walkTo(target);
+      },
+    };
+
+    function pickClickLine() {
+      const { mood } = deriveMood(state);
+      if (mood === 'happy')   return 'Glad you\'re here.';
+      if (mood === 'excited') return 'Let\'s speak together!';
+      if (mood === 'tired')   return 'Hmm, I could use a quick rest.';
+      if (mood === 'hungry')  return 'A small tea break sounds nice.';
+      if (mood === 'lonely')  return 'It\'s good to see you.';
+      if (mood === 'curious') return 'What shall we explore?';
+      return 'Hi there. Ready to practice?';
+    }
+    function pickPettedLine() {
+      const lines = ['That feels nice.', 'A little more, please.', 'Soft hands, warm heart.', 'Panda likes that.'];
+      return lines[Math.floor(Math.random() * lines.length)];
+    }
+
+    window.__pet = pet;
+  })();
+  </script>
+</body>
+</html>
