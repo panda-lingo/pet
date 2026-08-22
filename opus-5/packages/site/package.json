@@ -1,0 +1,21 @@
+{
+  "name": "@pandalingo/site",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "PandaLingo demo host page (brand chrome, hero, sections, data-pet-target anchors) shared by both pet implementations.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./site.css": "./src/site.css",
+    "./demo.css": "./src/demo.css",
+    "./gallery.css": "./src/gallery.css"
+  },
+  "dependencies": {
+    "@pet/core": "*",
+    "@pet/react": "*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

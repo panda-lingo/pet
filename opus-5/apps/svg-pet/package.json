@@ -1,0 +1,19 @@
+{
+  "name": "@pandalingo/svg-pet",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Solution A: website pet rendered as an inline layered SVG React component.",
+  "scripts": {
+    "dev": "vite --port 4321",
+    "build": "vite build",
+    "preview": "vite preview --port 4321 --strictPort"
+  },
+  "dependencies": {
+    "@pandalingo/site": "*",
+    "@pet/core": "*",
+    "@pet/react": "*",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  }
+}

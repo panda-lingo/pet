@@ -1,0 +1,20 @@
+{
+  "name": "@pandalingo/pixi-pet",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Solution B: website pet rendered with PixiJS v8 Graphics, generated entirely from source code.",
+  "scripts": {
+    "dev": "vite --port 4322",
+    "build": "vite build",
+    "preview": "vite preview --port 4322 --strictPort"
+  },
+  "dependencies": {
+    "@pandalingo/site": "*",
+    "@pet/core": "*",
+    "@pet/react": "*",
+    "pixi.js": "8.20.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  }
+}

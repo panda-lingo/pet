@@ -1,0 +1,18 @@
+{
+  "name": "@pet/react",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "React glue for the pet feature: provider, overlay, speech bubble, controls, guide hook. Renderer agnostic.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./pet-ui.css": "./src/pet-ui.css"
+  },
+  "dependencies": {
+    "@pet/core": "*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

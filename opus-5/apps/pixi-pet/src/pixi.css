@@ -1,0 +1,53 @@
+/**
+ * Solution B's only stylesheet: everything else is shared chrome from `@pet/react`.
+ *
+ * The canvas is deliberately bigger than the pet box — a hop, a stretch and a particle burst all
+ * reach past the pet's footprint — so the host is centred on the box and overflows it in every
+ * direction. It must never take a pointer event: the tightly fitted `.pl-pet-hit` blob inside the
+ * box is the one pointer surface, which keeps the empty corners click-through for the page.
+ */
+
+.pl-pixi-host {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  /* The stage paints the neutral pose before its first frame, so this only hides the gap
+     between the element mounting and PixiJS arriving from its lazy chunk. */
+  opacity: 0;
+  transition: opacity var(--pl-duration-slow, 420ms) var(--pl-ease, cubic-bezier(0.22, 0.61, 0.36, 1));
+}
+
+.pl-pixi-host[data-status='ready'] {
+  opacity: 1;
+}
+
+/*
+ * No WebGL (a blocked context, a very old browser): the page, the speech bubble, the tour and
+ * the controls all keep working, so the pet becomes a quiet brand-coloured disc rather than an
+ * empty square. Sized to the pet box, not to the oversized canvas host.
+ */
+.pl-pixi-host[data-status='unsupported'] {
+  opacity: 1;
+}
+
+.pl-pixi-host[data-status='unsupported']::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44%;
+  height: 44%;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--pl-gold, #b68c5a);
+  border-radius: 46%;
+  background: var(--pl-cream, #f7f2e8);
+  box-shadow: 0 8px 20px rgba(42, 39, 36, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-pixi-host {
+    transition: none;
+  }
+}

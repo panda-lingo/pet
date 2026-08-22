@@ -1,0 +1,173 @@
+/**
+ * Solution A rig. Every rule below reads pose custom properties written by
+ * `svgAnimationController.ts` once per frame; no rule animates on its own, so the shared pose
+ * engine stays the single source of motion for both solutions.
+ *
+ * Rotations and scales are written as `translate(pivot) … translate(-pivot)` with
+ * `transform-origin: 0 0`, which makes each pivot explicit in the cascade instead of relying
+ * on a browser's default transform origin. Pivots come from `geometry.ts` as `--o-*`.
+ */
+
+.pl-panda {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* A hop or a stretch may reach past the pet box; nothing should clip. */
+  overflow: visible;
+}
+
+.pl-panda-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.pl-panda__part {
+  transform-box: view-box;
+  transform-origin: 0 0;
+}
+
+/* Whole figure: hop offset, then lean and life-stage scale about the ground contact point. */
+.pl-panda__figure {
+  transform: translate(calc(var(--p-root-x, 0) * 1px), calc(var(--p-root-y, 0) * 1px))
+    translate(var(--o-figure-x), var(--o-figure-y)) rotate(calc(var(--p-root-rot, 0) * 1deg))
+    scale(calc(var(--p-root-scale, 1) * var(--s-overall, 1))) scaleX(var(--p-facing, 1))
+    translate(calc(-1 * var(--o-figure-x)), calc(-1 * var(--o-figure-y)));
+}
+
+/* Torso: breathing and squash about the hips. */
+.pl-panda__torso {
+  transform: translate(0, calc(var(--p-body-y, 0) * 1px)) translate(var(--o-torso-x), var(--o-torso-y))
+    rotate(calc(var(--p-body-rot, 0) * 1deg))
+    scale(calc(var(--p-body-sx, 1) * var(--s-body, 1)), calc(var(--p-body-sy, 1) * var(--s-body, 1)))
+    translate(calc(-1 * var(--o-torso-x)), calc(-1 * var(--o-torso-y)));
+}
+
+/*
+ * Head: a sibling of the torso, so squash never distorts the face, but it still rides the
+ * breath by adding `--p-body-y` to its own offset.
+ */
+.pl-panda__head {
+  transform: translate(calc(var(--p-head-x, 0) * 1px), calc((var(--p-head-y, 0) + var(--p-body-y, 0)) * 1px))
+    translate(var(--o-head-x), var(--o-head-y)) rotate(calc(var(--p-head-rot, 0) * 1deg))
+    scale(var(--s-head, 1)) translate(calc(-1 * var(--o-head-x)), calc(-1 * var(--o-head-y)));
+}
+/* Ears: rock about the skull join. `earLeftRot` and `earRightRot` are already mirrored. */
+.pl-panda__ear--left {
+  transform: translate(var(--o-ear-left-x), var(--o-ear-left-y)) rotate(calc(var(--p-ear-l, 0) * 1deg))
+    scale(var(--s-ear, 1)) translate(calc(-1 * var(--o-ear-left-x)), calc(-1 * var(--o-ear-left-y)));
+}
+
+.pl-panda__ear--right {
+  transform: translate(var(--o-ear-right-x), var(--o-ear-right-y)) rotate(calc(var(--p-ear-r, 0) * 1deg))
+    scale(var(--s-ear, 1)) translate(calc(-1 * var(--o-ear-right-x)), calc(-1 * var(--o-ear-right-y)));
+}
+
+/* Eye: life-stage scale on the outer group, lid on the middle one, gaze on the pupil. */
+.pl-panda__eye--left {
+  transform: translate(var(--o-eye-left-x), var(--o-eye-left-y)) scale(var(--s-eye, 1))
+    translate(calc(-1 * var(--o-eye-left-x)), calc(-1 * var(--o-eye-left-y)));
+}
+
+.pl-panda__eye--right {
+  transform: translate(var(--o-eye-right-x), var(--o-eye-right-y)) scale(var(--s-eye, 1))
+    translate(calc(-1 * var(--o-eye-right-x)), calc(-1 * var(--o-eye-right-y)));
+}
+
+.pl-panda__lid--left {
+  transform: translate(var(--o-eye-left-x), var(--o-eye-left-y)) scaleY(var(--p-eye-open, 1))
+    translate(calc(-1 * var(--o-eye-left-x)), calc(-1 * var(--o-eye-left-y)));
+}
+
+.pl-panda__lid--right {
+  transform: translate(var(--o-eye-right-x), var(--o-eye-right-y)) scaleY(var(--p-eye-open, 1))
+    translate(calc(-1 * var(--o-eye-right-x)), calc(-1 * var(--o-eye-right-y)));
+}
+
+.pl-panda__pupil--left,
+.pl-panda__pupil--right {
+  transform: translate(calc(var(--p-pupil-x, 0) * 2px), calc(var(--p-pupil-y, 0) * 1.5px));
+}
+
+.pl-panda__lash--left,
+.pl-panda__lash--right {
+  opacity: calc(1 - var(--p-eye-open, 1));
+}
+/* Brows: lift with `browY`, tilt with `browAngle`, mirrored on the right. */
+.pl-panda__brow--left {
+  transform: translate(0, calc(var(--p-brow-y, 0) * 1px)) translate(var(--o-brow-left-x), var(--o-brow-left-y))
+    rotate(calc(var(--p-brow-angle, 0) * 1deg))
+    translate(calc(-1 * var(--o-brow-left-x)), calc(-1 * var(--o-brow-left-y)));
+}
+
+.pl-panda__brow--right {
+  transform: translate(0, calc(var(--p-brow-y, 0) * 1px)) translate(var(--o-brow-right-x), var(--o-brow-right-y))
+    rotate(calc(var(--p-brow-angle, 0) * -1deg))
+    translate(calc(-1 * var(--o-brow-right-x)), calc(-1 * var(--o-brow-right-y)));
+}
+
+/* Mouth: one curve path flipped by `mouthCurve`, one open shape scaled by `mouthOpen`. */
+.pl-panda__mouth-curve {
+  transform: translate(var(--o-mouth-x), var(--o-mouth-y)) scaleY(var(--p-mouth-curve, 0.25))
+    translate(calc(-1 * var(--o-mouth-x)), calc(-1 * var(--o-mouth-y)));
+}
+
+.pl-panda__mouth-open {
+  opacity: var(--p-mouth-open, 0);
+  transform: translate(var(--o-mouth-x), var(--o-mouth-y)) scaleY(var(--p-mouth-open, 0))
+    translate(calc(-1 * var(--o-mouth-x)), calc(-1 * var(--o-mouth-y)));
+}
+
+.pl-panda__cheeks {
+  opacity: var(--p-cheek, 0);
+}
+
+/* Front legs. The left arm mirrors the right, so one signed value drives both. */
+.pl-panda__arm--left {
+  transform: translate(var(--o-arm-left-x), var(--o-arm-left-y)) rotate(calc(var(--p-arm-l, 0) * -1deg))
+    translate(calc(-1 * var(--o-arm-left-x)), calc(-1 * var(--o-arm-left-y)));
+}
+
+.pl-panda__arm--right {
+  transform: translate(var(--o-arm-right-x), var(--o-arm-right-y)) rotate(calc(var(--p-arm-r, 0) * 1deg))
+    translate(calc(-1 * var(--o-arm-right-x)), calc(-1 * var(--o-arm-right-y)));
+}
+/* Back legs: the gait pair, plus the life-stage leg length scaled down from the hip. */
+.pl-panda__leg--left {
+  transform: translate(var(--o-leg-left-x), var(--o-leg-left-y)) rotate(calc(var(--p-leg-f, 0) * -1deg))
+    scaleY(var(--s-leg, 1)) translate(calc(-1 * var(--o-leg-left-x)), calc(-1 * var(--o-leg-left-y)));
+}
+
+.pl-panda__leg--right {
+  transform: translate(var(--o-leg-right-x), var(--o-leg-right-y)) rotate(calc(var(--p-leg-b, 0) * 1deg))
+    scaleY(var(--s-leg, 1)) translate(calc(-1 * var(--o-leg-right-x)), calc(-1 * var(--o-leg-right-y)));
+}
+
+.pl-panda__tail {
+  transform: translate(var(--o-tail-x), var(--o-tail-y)) rotate(calc(var(--p-tail, 0) * 1deg))
+    scale(var(--s-tail, 1)) translate(calc(-1 * var(--o-tail-x)), calc(-1 * var(--o-tail-y)));
+}
+
+.pl-panda__scarf {
+  transform: translate(var(--o-scarf-x), var(--o-scarf-y)) rotate(calc(var(--p-scarf, 0) * 1deg))
+    translate(calc(-1 * var(--o-scarf-x)), calc(-1 * var(--o-scarf-y)));
+}
+
+/* The shadow stays on the floor: it never inherits the hop offset, only its own scale. */
+.pl-panda__shadow {
+  opacity: var(--p-shadow-alpha, 0.16);
+  transform: translate(var(--o-shadow-x), var(--o-shadow-y)) scale(var(--p-shadow-scale, 1))
+    translate(calc(-1 * var(--o-shadow-x)), calc(-1 * var(--o-shadow-y)));
+}
+
+/* Particles are appended by the controller and animated with the Web Animations API. */
+.pl-panda__particle {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-panda__particle {
+    display: none;
+  }
+}

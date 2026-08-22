@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["vite/client", "node"]
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
+    "packages/*/test/**/*.ts",
+    "apps/*/src/**/*.ts",
+    "apps/*/src/**/*.tsx",
+    "apps/*/tests/**/*.ts",
+    "apps/*/tests/**/*.tsx",
+    "apps/*/e2e/**/*.ts",
+    "apps/*/vite.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "name": "opus-5-website-pet",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Two implementations of the PandaLingo website pet: inline SVG and PixiJS v8, sharing one brand-aligned domain core.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:svg": "npm run dev -w @pandalingo/svg-pet",
+    "dev:pixi": "npm run dev -w @pandalingo/pixi-pet",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "build": "npm run build -w @pandalingo/svg-pet && npm run build -w @pandalingo/pixi-pet",
+    "build:html": "npm run build && node scripts/collect-html.mjs",
+    "e2e": "npm run build && playwright test",
+    "e2e:nobuild": "playwright test",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build:html"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.2",
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react": "5.2.0",
+    "eslint": "9.39.5",
+    "jsdom": "30.0.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.67.0",
+    "vite": "7.3.6",
+    "vite-plugin-singlefile": "2.3.3",
+    "vitest": "3.2.7"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@pet/core",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Framework-free pet domain: needs, mood, life stages, persistence, idle selection, gestures, pose engine, guide engine.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  }
+}
